@@ -1,0 +1,30 @@
+# Rust build output
+/target/
+
+# Rust compiled artifacts
+*.rlib
+*.so
+*.dylib
+*.dll
+*.exe
+*.pdb
+
+# Cargo lockfile (optional, usually keep for apps, ignore for libraries)
+**/Cargo.lock
+
+# Neovim / Vim swap, backup, undo, and session files
+*.swp
+*.swo
+*.swn
+*.un~ 
+*.sublime-workspace
+*.sublime-project
+*.viminfo
+*.nvim*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
