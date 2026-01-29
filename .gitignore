@@ -1,6 +1,11 @@
 # Rust build output
 /target/
 
+# Ignore temp stdout/stderr from flycheck or other tools
+/target/**/stdout
+/target/**/stderr
+
+
 # Rust compiled artifacts
 *.rlib
 *.so
