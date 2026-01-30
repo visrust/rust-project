@@ -1,59 +1,69 @@
 mod tmp;
+
 use std::{
-    fs::File,
+    fs::{File, OpenOptions},
     io::{self, Write},
-    process::Command,
+    path::Path,
 };
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Welcome to tasker");
+type AppResult<T> = Result<T, io::Error>;
+fn main() -> AppResult<()> {
+    let mut file = file_creation()?;
+    editor(&mut file)?;
+    Ok(())
+}
 
-    print!("Enter name of Task file : ");
-    io::stdout().flush()?;
-
-    let mut file_name = String::new();
-    io::stdin().read_line(&mut file_name)?;
-
-    let file = file_name.trim();
-
-    if file.is_empty() {
-        println!("File name can't be empty");
-    } else if file.contains(".") {
-        println!("Adding .extension is not allowed")
-    } else {
-        let full_path = format!("{}.txt", file);
-        let mut note = File::create_new(&full_path)?;
-
-        loop {
-            print!("Enter your todo: ");
-            io::stdout().flush()?;
-
-            let mut todo = String::new();
-            io::stdin().read_line(&mut todo)?;
-
-            if todo.trim() == ":q" {
-                println!("file saved at ./{}", full_path);
-                let status = Command::new("bat").arg(format!("./{file}.txt")).status()?;
-
-                if !status.success() {
-                    println!("Command Failed to run! Install bat\n Continuing with cat");
-                    let status = Command::new("cat").arg(format!("./{file}.txt")).status()?;
-                    if !status.success() {
-                        println!("Failed");
-                    }
-                }
-                break;
-            } else if todo.trim() == ":w" {
-                println!("saved!");
-            } else if todo.trim() == ":h" {
-                println!(":q or :w ==> for quit or write\n empty line ==> treated as enter");
-            } else if todo.trim().is_empty() {
-                println!("Will be treated as line break");
-            }
-            // write
-            note.write_all(todo.as_bytes())?;
-        }
+fn validiate_name(f_name: &str) -> AppResult<()> {
+    if f_name.is_empty() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "File name is empty!",
+        ));
     }
+    if f_name.contains(".") {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "File name either contains an extension or dot!",
+        ));
+    }
+    Ok(())
+}
 
+fn open_or_create(filename: &str) -> AppResult<File> {
+    let path = Path::new(&filename);
+    OpenOptions::new().append(true).create(true).open(&path)
+}
+
+fn file_creation() -> AppResult<File> {
+    let mut input = String::new();
+    loop {
+        input.clear();
+        print!("Enter file name: ");
+        io::stdout().flush()?;
+
+        io::stdin().read_line(&mut input)?;
+
+        let trimmed = input.trim();
+        if let Err(e) = validiate_name(trimmed) {
+            println!("Error : {e}");
+            continue;
+        }
+
+        let file = open_or_create(trimmed)?;
+        println!("Editing {}.txt", trimmed);
+        return Ok(file);
+    }
+}
+
+fn editor(file: &mut File) -> AppResult<()> {
+    loop {
+        let mut lines = String::new();
+        let bytes = io::stdin().read_line(&mut lines)?;
+        if bytes == 0 {
+            break;
+        }
+
+        file.write_all(lines.as_bytes())?;
+    }
     Ok(())
 }
