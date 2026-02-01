@@ -1,73 +1,81 @@
-use std::{env, error::Error};
+use std::{env, fs::File, io::Result, path::{ Path}};
 
 // prototype code
-type TryOp<T> = Result<T, Box<dyn Error>>;
+type TryOp<T> = Result<T>;
 
 fn main() -> TryOp<()> {
     let args: Vec<String> = env::args().collect();
-    // Basic logic
+
+    // if argument is less than 2 then print help
     if args.len() < 2 {
-        println!("Usage : ledgerly <cmd>");
+        help();
         return Ok(());
     }
 
-    let command = &args[1];
+    // argument 2 is always sub command
+    let sub_command = &args[1];
 
-    match command.as_str() {
+    // used as_string as we can't match directly on String/&String
+    match sub_command.as_str() {
         "greet" => greet(&args),
         "add" => add(&args),
         "help" => help(),
-
-        // "add" => add_cmd()?,
-        _ => println!("For usage help : ledgerly help"),
+        _ => println!("Wrong command! Use this instead : ledgerly help"),
     }
-
-    // if command.contains("add") {
-    //     if args.len() < 3 {}
-    // }
     Ok(())
 }
-
-// fn add_cmd() -> io::Result<()> {
-//     let arg_add: Vec<String> = env::args().collect();
-//     if arg_add.len() < 3 {
-//         return Err(io::Error::new(
-//             io::ErrorKind::InvalidInput,
-//             "Error : Atleast 3 parameters needed to proceed. Help : try using --> ledgerly add water intake at 12 pm was 120ml",
-//         ));
-//     } else {
-//         println!("Added successfully!")
-//     }
-//     Ok(())
-// }
 
 fn greet(arg_in: &Vec<String>) {
     println!("Hello! {}", arg_in[2]);
 }
 
 fn add(arg_in: &Vec<String>) {
-    println!(
-        "Added : {}, {}, {}, {}",
-        arg_in[2], arg_in[3], arg_in[4], arg_in[6]
-    );
+    if arg_in.len() <= 2 {
+        println!("Nothing has been added after the add argument!");
+    }
+
+    let item = &arg_in[2..];
+
+    if arg_in.len() >= 3 {
+        println!("Added : {}", item.join(","));
+        let x = _file_handling();
+        return x;
+        // shift this logic in a function
+    }
 }
 
 fn help() {
     println!(
         r#"
         Usage : ledgerly <cmd>
-        Note : // is used as comments
         Where cmd is :
         
-        1. add // to add a value
-        2. sum // for summarize.
-        3. help // for help.
-        4. greet // for greeting.
-        5. since DD/MM/YYYY // to see from a time.
-        6. today // to see today's ledger.
-        7. yesterday // to see yesterday ledger.
-        8. week // to see past 7 day ledger.
+        1. add               --> ro add a value
+        2. sum               --> for summarize.
+        3. help              --> for help.
+        4. greet             --> for greeting.
+        5. since DD-MM-YY    --> to see from a time.
+        6. today             --> to see today's ledger.
+        7. yesterday         --> to see yesterday ledger.
+        8. week              --> to see past 7 day ledger.
 
     "#
     )
 }
+
+fn create_dir_() -> Result<(), std::error::Error>{
+    let dir = std::fs::create_dir("./ledgerly")?;
+    return dir;
+
+}
+
+fn _file_handling()-> std::io::Result<()>{
+    let file_path = "./ledgerly/today.txt";
+    let _file = File::create_new(file_path);
+    let path = Path::new(file_path);
+    println!("File path : {:?}", path);
+    // let new_file = File::create("./ledgerly/today.txt")?;
+    // let path = Path::new(&new_file);
+    Ok(())
+}
+
