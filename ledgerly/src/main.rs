@@ -1,9 +1,13 @@
-use std::{env, fs::File, io::Result, path::{ Path}};
+use std::{
+    env::{self},
+    fs::File,
+    io::Result,
+    path::Path,
+    process::Command,
+};
 
 // prototype code
-type TryOp<T> = Result<T>;
-
-fn main() -> TryOp<()> {
+fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
 
     // if argument is less than 2 then print help
@@ -38,8 +42,7 @@ fn add(arg_in: &Vec<String>) {
 
     if arg_in.len() >= 3 {
         println!("Added : {}", item.join(","));
-        let x = _file_handling();
-        return x;
+        _file_handling();
         // shift this logic in a function
     }
 }
@@ -50,7 +53,7 @@ fn help() {
         Usage : ledgerly <cmd>
         Where cmd is :
         
-        1. add               --> ro add a value
+  a      1. add               --> ro add a value
         2. sum               --> for summarize.
         3. help              --> for help.
         4. greet             --> for greeting.
@@ -63,19 +66,22 @@ fn help() {
     )
 }
 
-fn create_dir_() -> Result<(), std::error::Error>{
-    let dir = std::fs::create_dir("./ledgerly")?;
-    return dir;
+fn _create_dir_() -> Result<()> {
+    let dir_path = "./ledgerly/";
 
+    if Path::new(&dir_path).exists() {
+        println!("Path exists ..");
+        println!("creating a new dir ...");
+        Command::new("mkdir").arg("./new_ledg").output()?;
+    } else {
+        Command::new("mkdir").arg("./ledgerly/").output()?;
+    }
+    Ok(())
 }
 
-fn _file_handling()-> std::io::Result<()>{
+fn _file_handling() {
     let file_path = "./ledgerly/today.txt";
     let _file = File::create_new(file_path);
     let path = Path::new(file_path);
     println!("File path : {:?}", path);
-    // let new_file = File::create("./ledgerly/today.txt")?;
-    // let path = Path::new(&new_file);
-    Ok(())
 }
-
