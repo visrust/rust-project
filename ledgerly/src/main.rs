@@ -1,9 +1,9 @@
 use std::{
     env::{self},
-    fs::File,
-    io::Result,
+    io::{Result, Write},
     path::Path,
     process::Command,
+    thread::sleep,
 };
 
 // prototype code
@@ -22,7 +22,7 @@ fn main() -> Result<()> {
     // used as_string as we can't match directly on String/&String
     match sub_command.as_str() {
         "greet" => greet(&args),
-        "add" => add(&args),
+        "add" => add(&args)?,
         "help" => help(),
         _ => println!("Wrong command! Use this instead : ledgerly help"),
     }
@@ -30,21 +30,28 @@ fn main() -> Result<()> {
 }
 
 fn greet(arg_in: &Vec<String>) {
-    println!("Hello! {}", arg_in[2]);
+    let arg_2 = arg_in.get(2);
+    if arg_2.is_none() {
+        println!("Hello, from Ledgerly!");
+    } else {
+        println!("Ledgerly greets {}", arg_in[2]);
+    }
 }
 
-fn add(arg_in: &Vec<String>) {
-    if arg_in.len() <= 2 {
-        println!("Nothing has been added after the add argument!");
+fn add(arg_in: &Vec<String>) -> Result<()> {
+    let arg_2 = arg_in.get(2);
+    if arg_2.is_none() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Hint : Input something after add argument.",
+        ));
+    } else {
+        // return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "E"));
+        create_dir_()?;
+        file_handling()?;
     }
 
-    let item = &arg_in[2..];
-
-    if arg_in.len() >= 3 {
-        println!("Added : {}", item.join(","));
-        _file_handling();
-        // shift this logic in a function
-    }
+    Ok(())
 }
 
 fn help() {
@@ -53,7 +60,7 @@ fn help() {
         Usage : ledgerly <cmd>
         Where cmd is :
         
-  a      1. add               --> ro add a value
+        1. add               --> ro add a value
         2. sum               --> for summarize.
         3. help              --> for help.
         4. greet             --> for greeting.
@@ -66,22 +73,77 @@ fn help() {
     )
 }
 
-fn _create_dir_() -> Result<()> {
-    let dir_path = "./ledgerly/";
-
-    if Path::new(&dir_path).exists() {
-        println!("Path exists ..");
-        println!("creating a new dir ...");
-        Command::new("mkdir").arg("./new_ledg").output()?;
-    } else {
-        Command::new("mkdir").arg("./ledgerly/").output()?;
-    }
+fn create_dir_() -> Result<()> {
+    println!("creating dir...");
+    sleep_for_sec(5);
+    println!("dir created succesfully");
+    Command::new("mkdir").arg("./ledgerly/").output()?;
     Ok(())
 }
 
-fn _file_handling() {
-    let file_path = "./ledgerly/today.txt";
-    let _file = File::create_new(file_path);
-    let path = Path::new(file_path);
-    println!("File path : {:?}", path);
+fn file_handling() -> std::io::Result<()> {
+    print!("Enter file name: ");
+    std::io::stdout().flush()?;
+    let mut input_name = String::new();
+    std::io::stdin().read_line(&mut input_name)?;
+
+    let final_name = format!("./ledgerly/{}.txt", input_name);
+
+    if input_name.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Error: unexpected blank file name",
+        ));
+    } else if input_name.contains(".") {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Error: unexpected dot (.) in file's name",
+        ));
+    } else if Path::new(&final_name).exists() {
+        println!("The file already exists.");
+        println!("Press y/n to continue/create new file");
+        loop {
+            print!("Enter (y/n): ");
+            std::io::stdout().flush()?;
+
+            let mut yes_or_no = String::new();
+            std::io::stdin().read_line(&mut yes_or_no)?;
+            let ans = yes_or_no.trim();
+
+            if ans.is_empty() {
+                println!("Error: the input was blank retry!");
+                continue;
+            } else if ans.len() >= 2 {
+                println!(
+                    "Error: expected a single char but received {} chars",
+                    ans.len()
+                );
+                continue;
+            } else if ans.contains('y') {
+                let mut file = std::fs::OpenOptions::new()
+                    .read(true)
+                    .write(true)
+                    .create(true)
+                    .open(&final_name)?;
+                let data = String::from("Hello");
+                let to_bytes = data.as_bytes();
+                file.write_all(&to_bytes)?;
+            } else if ans.contains('n') {
+                let mut file = std::fs::OpenOptions::new()
+                    .read(true)
+                    .write(true)
+                    .open(&final_name)?;
+                let data = String::from("Hello");
+                let to_bytes = data.as_bytes();
+                file.write_all(&to_bytes)?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn sleep_for_sec(n: u64) {
+    let sleeping = std::time::Duration::from_secs(n);
+    sleep(sleeping);
 }
