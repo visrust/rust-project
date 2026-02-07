@@ -43,9 +43,17 @@ fn add(arg_in: &[String]) -> Result<()> {
             "Hint : Input something after add argument.",
         ));
     } else {
-        // return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "E"));
+        let to_add = arg_in[2..].join(" ");
+        let prompt: &str = &to_add;
         create_dir_()?;
-        // file_handling()?;
+        let path = file_name_check()?;
+        let path_str: &str = &path;
+
+        if std::path::Path::new(&path).exists() {
+            file_exists_in_path(path_str, prompt)?;
+        } else {
+            std::fs::write(&path, prompt)?;
+        }
     }
 
     Ok(())
@@ -84,7 +92,7 @@ fn get_input(prompt: &str) -> std::io::Result<String> {
     Ok(input.trim().to_string())
 }
 
-fn file_name_check() -> std::io::Result<()> {
+fn file_name_check() -> std::io::Result<String> {
     let input_name = get_input("Enter file's name: ")?;
     let path = format!("./ledgerly/{}.txt", input_name);
 
@@ -99,30 +107,27 @@ fn file_name_check() -> std::io::Result<()> {
     if std::path::Path::new(&path).exists() {
         println!("Path already exists!");
     }
-    Ok(())
+    Ok(path)
 }
 
-fn file_exists_in_path(path: &str) -> std::io::Result<()> {
+fn file_exists_in_path(path: &str, prompt: &str) -> std::io::Result<()> {
     loop {
         let ans = get_input("File exists! Overwrite? (y/n): ")?;
         match ans.as_str() {
             "y" => {
-                todo!("add creation function");
-                std::fs::write(path, "hello")?;
+                std::fs::write(path, prompt)?;
                 break;
             }
 
             "n" => {
-                todo!("add continuation function"),
                 break;
             }
 
             _ => {
-                println!("Please enter `y` or `n`"),
+                println!("Please enter `y` or `n`");
                 continue;
             }
         }
     }
     Ok(())
-        a
 }
