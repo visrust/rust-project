@@ -1,9 +1,6 @@
 use std::{
     env::{self},
     io::{Result, Write},
-    path::Path,
-    process::Command,
-    thread::sleep,
 };
 
 // prototype code
@@ -29,7 +26,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn greet(arg_in: &Vec<String>) {
+fn greet(arg_in: &[String]) {
     let arg_2 = arg_in.get(2);
     if arg_2.is_none() {
         println!("Hello, from Ledgerly!");
@@ -38,7 +35,7 @@ fn greet(arg_in: &Vec<String>) {
     }
 }
 
-fn add(arg_in: &Vec<String>) -> Result<()> {
+fn add(arg_in: &[String]) -> Result<()> {
     let arg_2 = arg_in.get(2);
     if arg_2.is_none() {
         return Err(std::io::Error::new(
@@ -48,7 +45,7 @@ fn add(arg_in: &Vec<String>) -> Result<()> {
     } else {
         // return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "E"));
         create_dir_()?;
-        file_handling()?;
+        // file_handling()?;
     }
 
     Ok(())
@@ -75,75 +72,57 @@ fn help() {
 
 fn create_dir_() -> Result<()> {
     println!("creating dir...");
-    sleep_for_sec(5);
-    println!("dir created succesfully");
-    Command::new("mkdir").arg("./ledgerly/").output()?;
+    std::fs::create_dir_all("./ledgerly/")?;
     Ok(())
 }
 
-fn file_handling() -> std::io::Result<()> {
-    print!("Enter file name: ");
+fn get_input(prompt: &str) -> std::io::Result<String> {
+    print!("{}", prompt);
     std::io::stdout().flush()?;
-    let mut input_name = String::new();
-    std::io::stdin().read_line(&mut input_name)?;
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input)?;
+    Ok(input.trim().to_string())
+}
 
-    let final_name = format!("./ledgerly/{}.txt", input_name);
+fn file_name_check() -> std::io::Result<()> {
+    let input_name = get_input("Enter file's name: ")?;
+    let path = format!("./ledgerly/{}.txt", input_name);
 
     if input_name.is_empty() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "Error: unexpected blank file name",
-        ));
-    } else if input_name.contains(".") {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "Error: unexpected dot (.) in file's name",
-        ));
-    } else if Path::new(&final_name).exists() {
-        println!("The file already exists.");
-        println!("Press y/n to continue/create new file");
-        loop {
-            print!("Enter (y/n): ");
-            std::io::stdout().flush()?;
+        println!("Input name can not be empty! Retry...");
+    }
 
-            let mut yes_or_no = String::new();
-            std::io::stdin().read_line(&mut yes_or_no)?;
-            let ans = yes_or_no.trim();
+    if input_name.contains(".") {
+        println!("Not allowed to add extension or dots in file name")
+    }
 
-            if ans.is_empty() {
-                println!("Error: the input was blank retry!");
+    if std::path::Path::new(&path).exists() {
+        println!("Path already exists!");
+    }
+    Ok(())
+}
+
+fn file_exists_in_path(path: &str) -> std::io::Result<()> {
+    loop {
+        let ans = get_input("File exists! Overwrite? (y/n): ")?;
+        match ans.as_str() {
+            "y" => {
+                todo!("add creation function");
+                std::fs::write(path, "hello")?;
+                break;
+            }
+
+            "n" => {
+                todo!("add continuation function"),
+                break;
+            }
+
+            _ => {
+                println!("Please enter `y` or `n`"),
                 continue;
-            } else if ans.len() >= 2 {
-                println!(
-                    "Error: expected a single char but received {} chars",
-                    ans.len()
-                );
-                continue;
-            } else if ans.contains('y') {
-                let mut file = std::fs::OpenOptions::new()
-                    .read(true)
-                    .write(true)
-                    .create(true)
-                    .open(&final_name)?;
-                let data = String::from("Hello");
-                let to_bytes = data.as_bytes();
-                file.write_all(&to_bytes)?;
-            } else if ans.contains('n') {
-                let mut file = std::fs::OpenOptions::new()
-                    .read(true)
-                    .write(true)
-                    .open(&final_name)?;
-                let data = String::from("Hello");
-                let to_bytes = data.as_bytes();
-                file.write_all(&to_bytes)?;
             }
         }
     }
-
     Ok(())
-}
-
-fn sleep_for_sec(n: u64) {
-    let sleeping = std::time::Duration::from_secs(n);
-    sleep(sleeping);
+        a
 }
